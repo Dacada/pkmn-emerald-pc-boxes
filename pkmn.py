@@ -7,6 +7,8 @@ from typing import ClassVar, Protocol, Self, cast, get_type_hints
 from pathlib import Path
 import argparse
 
+from definitions import PkmnSpecies, PkmnItem, PkmnMove, PkmnLocation, PkmnPPBonus, PkmnPokerus, PkmnOrigins, PkmnIVsEggAbility, PkmnRibbonsObedience
+
 def existing_file(path: str) -> Path:
     p = Path(path)
     if not p.is_file():
@@ -173,45 +175,20 @@ class SectionedBinaryFileLike:
             raise ValueError("I/O operation on closed file")
 
 
-class PkmnSpecies(IntEnum):
-    pass
-
-class PkmnItem(IntEnum):
-    pass
-
-class PkmnMove(IntEnum):
-    pass
-
-class PkmnLocation(IntEnum):
-    pass
-
-class PkmnPPBonus(Bitfield):
-    pass
-
-class PkmnPokerus(Bitfield):
-    pass
-
-class PkmnOrigins(Bitfield):
-    pass
-
-class PkmnIVsEggAbility(Bitfield):
-    pass
-
-class PkmnRibbonsObedience(Bitfield):
-    pass
-
-class LevelHelper:
-    @staticmethod
-    def exp2lvl(exp: int, species: PkmnSpecies) -> tuple[int, int]:
-        pass
-
-    @staticmethod
-    def lvl2exp(lvl: int, exp: int, species: PkmnSpecies) -> int:
-        pass
-
 @dataclass
 class PkmnData:
     _fmt: ClassVar[str]
+
+    def __post_init__(self):
+        hints = get_type_hints(type(self))
+
+        for field in fields(self):
+            typ = hints[field.name]
+            value = getattr(self, field.name)
+
+            if value is not None and isinstance(typ, type):
+                if not isinstance(value, typ):
+                    setattr(self, field.name, typ(value))
 
     @staticmethod
     def _apply_key(data: bytes, key: int) -> bytes:
